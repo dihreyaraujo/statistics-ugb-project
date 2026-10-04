@@ -1,90 +1,191 @@
 import math
 
+dados = []
 
-dados = [18, 19, 21, 22, 24, 25, 26, 27, 29, 30, 31, 33]
+while len(dados) != 12:
+    valor = int(input("Digite um valor: "))
+    dados.append(valor)
+
 dados.sort()
 
 n = len(dados)
 
-last = len(dados) -1 
-
 k = math.ceil(1 + 3.322 * math.log10(n))
 
-# h = AT / k
-h = (dados[last] - dados[0] ) / k 
+h = (dados[-1] - dados[0]) / k
+h = math.ceil(h)
 
-amplitude_classe = dados[2] - dados[0]
+# -----------------------------------------
+# CRIA AS CLASSES AUTOMATICAMENTE
+# -----------------------------------------
 
-print('--------------------------------------------')
+classes = []
 
+limite = dados[0]
 
+for i in range(k):
+
+    lim_inf = limite
+    lim_sup = lim_inf + h
+
+    if i == k - 1:
+        fi = sum(1 for x in dados if lim_inf <= x <= lim_sup)
+    else:
+        fi = sum(1 for x in dados if lim_inf <= x < lim_sup)
+
+    classes.append((lim_inf, lim_sup, fi))
+
+    limite = lim_sup
+
+# -----------------------------------------
+# TABELA
+# -----------------------------------------
+
+print("--------------------------------------------")
 print(f"Total de dados (n): {n}")
-
 print(f"Número de classes (k): {k}")
+print(f"Amplitude da classe (h): {h}")
 
-print(f"Amplitude Total (h): {h}")
-
-print('--------------------------------------------')
-
-
-print("\nDISTRIBUIÇÃO DE FREQUÊNCIA (COM INTERVALO)")
-
+print("--------------------------------------------")
+print("\nDISTRIBUIÇÃO DE FREQUÊNCIA")
 print("\nClasse | fi | FI")
 
-print(f"\n{dados[0]} - {dados[2]} | 2  | 2") 
-print("21 - 24 | 2  | 4")
-print("24 - 27 | 3  | 7")
-print("27 - 30 | 2  | 9")
-print("30 - 33 | 3  | 12")
+FI = 0
+
+for lim_inf, lim_sup, fi in classes:
+    FI += fi
+    print(f"{lim_inf} - {lim_sup} | {fi} | {FI}")
+
+# -----------------------------------------
+# ENCONTRAR CLASSE
+# -----------------------------------------
+
+def encontrar_classe(posicao):
+
+    FI = 0
+
+    for lim_inf, lim_sup, fi in classes:
+
+        FI_anterior = FI
+        FI += fi
+
+        if posicao <= FI:
+            return lim_inf, fi, FI_anterior
 
 
-print(f"\nIntervalo de classe: {amplitude_classe}")
-
-
-print("\n Calculados via Fórmulas de Interpolação:")
-
-print('\n --------------------------------------------')
-
-def media():
-    classes_fi = [
-        (18, 21), 
-        (21, 24),
-        (24, 27),
-        (27, 30),
-        (30, 33)
-    ]
-
-    soma_xi_fi = 0
-   
-
-    for lim_inf, lim_sup in classes_fi:
-        xi = (lim_inf + lim_sup) / 2
-        soma_xi_fi += xi
-
-    mediaC = soma_xi_fi / n
-    
-    print(f"Media: {mediaC}")
-media()
+# -----------------------------------------
+# MODA
+# -----------------------------------------
 
 def moda():
-    L_inf = 24
-    f_ant = 2
-    f_post = 2
 
-    king =  L_inf + (f_post / f_ant + f_post) * h
+    maior = 0
+    xi = 0
+    for lim_inf, lim_sup, fi in classes:
 
-    print(f"Moda (King): {king}")
-moda()
+        if(fi > maior):
+            maior = fi
+            xi = (lim_inf + lim_sup) / 2
+
+    print(f"Moda: {xi:.2f}")
+
+
+
+# -----------------------------------------
+# MÉDIA
+# -----------------------------------------
+
+def media():
+
+    soma = 0
+
+    for lim_inf, lim_sup, fi in classes:
+
+        xi = (lim_inf + lim_sup) / 2
+
+        soma += xi * fi
+
+    print(f"Média: {soma / n:.2f}")
+
+# -----------------------------------------
+# MEDIANA
+# 
 
 def mediana():
-    
-    linf = 24
-    fant = 4
-    fnd = 3
-    h_m = h 
 
-    mediana = linf + (((n / 2) - fant) * h_m  ) / fnd
+    posicao = n / 2
 
-    print(f"Mediana: {mediana}")
+    linf, fnd, fant = encontrar_classe(posicao)
+
+    valor = linf + ((posicao - fant) / fnd) * h
+
+    print(f"Mediana: {valor:.2f}")
+
+
+# -----------------------------------------
+# QUARTIL
+# -----------------------------------------
+
+def quartil(q):
+
+    posicao = q * n / 4
+
+    linf, fq, fant = encontrar_classe(posicao)
+
+    valor = linf + ((posicao - fant) / fq) * h
+
+    print(f"Q{q}: {valor:.2f}")
+
+
+# -----------------------------------------
+# DECIL
+# -----------------------------------------
+
+def decil(d):
+
+    posicao = d * n / 10
+
+    linf, fd, fant = encontrar_classe(posicao)
+
+    valor = linf + ((posicao - fant) / fd) * h
+
+    print(f"D{d}: {valor:.2f}")
+
+
+# -----------------------------------------
+# PERCENTIL
+# -----------------------------------------
+
+def percentil(p):
+
+    posicao = p * n / 100
+
+    linf, fp, fant = encontrar_classe(posicao)
+
+    valor = linf + ((posicao - fant) / fp) * h
+
+    return valor
+
+
+# -----------------------------------------
+# RESULTADOS
+# -----------------------------------------
+print("\n--------------------------------------------")
+print("Medidas de posição")
+
+moda()
+
+media()
+
 mediana()
 
+quartil(1)
+quartil(3)
+
+decil(2)
+decil(7)
+
+print(f"P15: {percentil(15):.2f}")
+print(f"P22: {percentil(22):.2f}")
+print(f"P63: {percentil(63):.2f}")
+print(f"P70: {percentil(70):.2f}")
